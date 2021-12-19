@@ -5,5 +5,7 @@ search_enabled: true
 
 # Aux links for the upper right navigation
 aux_links:
-  'fp-ts-wonka on GitHub':
-    - 'https://github.com/lingard/fp-ts-wonka'
+  "Docs":
+    - "//lingard.github.io/fp-ts-wonka/"
+  "GitHub":
+    - "//github.com/lingard/fp-ts-wonka"

@@ -3,7 +3,7 @@
 # Implemented instances
 
 - `Monad`
-- `Applicative1`
+- `Applicative`
 - `Alternative`
 - `Filterable`
 

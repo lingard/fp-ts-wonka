@@ -1,4 +1,13 @@
-/** @since 0.1.0 */
+/**
+ * A “[source](https://wonka.kitten.sh/api/sources)" in Wonka is a provider of
+ * data. It provides data to a “sink” when the “sink” requests it. This is
+ * called a pull signal and for synchronous sources no time will pass between
+ * the sink pulling a new value and a source sending it. For asynchronous
+ * sources, the source may either ignore pull signals and just push values or
+ * send one some time after the pull signal.
+ *
+ * @since 0.1.0
+ */
 import { Alt1 } from 'fp-ts/Alt'
 import { Alternative1 } from 'fp-ts/Alternative'
 import { Applicative1 } from 'fp-ts/Applicative'
