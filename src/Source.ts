@@ -19,7 +19,8 @@ import { Filterable1 } from 'fp-ts/Filterable'
 import { flow, identity, pipe } from 'fp-ts/function'
 import { Predicate } from 'fp-ts/Predicate'
 import { Refinement } from 'fp-ts/Refinement'
-import { Functor1 } from 'fp-ts/Functor'
+import { bindTo as bindTo_, flap as flap_, Functor1 } from 'fp-ts/Functor'
+import { bind as bind_, Chain1, chainFirst as chainFirst_ } from 'fp-ts/Chain'
 import { Monad1 } from 'fp-ts/Monad'
 import { MonadIO1 } from 'fp-ts/MonadIO'
 import { MonadTask1 } from 'fp-ts/MonadTask'
@@ -28,7 +29,7 @@ import * as O from 'fp-ts/Option'
 import * as Wonka from 'wonka'
 import { MonadSource1 } from './MonadSource'
 import { Task } from 'fp-ts/lib/Task'
-import { defer } from './operators'
+import { defer } from './sources'
 
 // -------------------------------------------------------------------------------------
 // constructors
@@ -149,25 +150,6 @@ export const flatten: <A>(
   chain(identity)
 
 /**
- * Composes computations in sequence, using the return value of one computation
- * to determine the next computation and keeping only the result of the first.
- *
- * Derivable from `Monad`.
- *
- * @since 0.1.0
- * @category Combinators
- */
-export const chainFirst: <A, B>(
-  f: (a: A) => Wonka.Source<B>
-) => (ma: Wonka.Source<A>) => Wonka.Source<A> = (f) =>
-  chain((a) =>
-    pipe(
-      f(a),
-      map(() => a)
-    )
-  )
-
-/**
  * Identifies an associative operation on a type constructor. It is similar to
  * `Semigroup`, except that it applies to types of kind `* -> *`.
  *
@@ -272,36 +254,36 @@ export const zero: Alternative1<URI>['zero'] = () => Wonka.empty
 // instances
 // -------------------------------------------------------------------------------------
 
-const map_: Functor1<URI>['map'] = (fa, f) => pipe(fa, map(f))
-const ap_: Apply1<URI>['ap'] = (fab, fa) => pipe(fab, ap(fa))
+const _map: Functor1<URI>['map'] = (fa, f) => pipe(fa, map(f))
+const _ap: Apply1<URI>['ap'] = (fab, fa) => pipe(fab, ap(fa))
 /* istanbul ignore next */
-const chain_: Monad1<URI>['chain'] = (fa, f) => pipe(fa, chain(f))
+const _chain: Monad1<URI>['chain'] = (fa, f) => pipe(fa, chain(f))
 /* istanbul ignore next */
-const alt_: Alt1<URI>['alt'] = (me, that) => pipe(me, alt(that))
+const _alt: Alt1<URI>['alt'] = (me, that) => pipe(me, alt(that))
 /* istanbul ignore next */
-const filter_: Filterable1<URI>['filter'] = <A>(
+const _filter: Filterable1<URI>['filter'] = <A>(
   fa: Wonka.Source<A>,
   p: Predicate<A>
 ) => pipe(fa, filter(p))
 /* istanbul ignore next */
-const filterMap_: Filterable1<URI>['filterMap'] = <A, B>(
+const _filterMap: Filterable1<URI>['filterMap'] = <A, B>(
   fa: Wonka.Source<A>,
   f: (a: A) => O.Option<B>
 ) => pipe(fa, filterMap(f))
 /* istanbul ignore next */
-const partition_: Filterable1<URI>['partition'] = <A>(
+const _partition: Filterable1<URI>['partition'] = <A>(
   fa: Wonka.Source<A>,
   p: Predicate<A>
 ) => pipe(fa, partition(p))
 /* istanbul ignore next */
-const partitionMap_: Filterable1<URI>['partitionMap'] = (fa, f) =>
+const _partitionMap: Filterable1<URI>['partitionMap'] = (fa, f) =>
   pipe(fa, partitionMap(f))
 
 /**
  * @since 0.1.0
  * @category Instances
  */
-export const URI = 'Source'
+export const URI = 'wonka/Source'
 
 /**
  * @since 0.1.0
@@ -330,8 +312,18 @@ export const getMonoid = <A = never>(): Monoid<Wonka.Source<A>> => ({
  */
 export const Functor: Functor1<URI> = {
   URI,
-  map: map_,
+  map: _map,
 }
+
+/**
+ * Derivable from `Functor`.
+ *
+ * @since 0.1.0
+ * @category Combinators
+ */
+export const flap =
+  /*#__PURE__*/
+  flap_(Functor)
 
 /**
  * @since 0.1.0
@@ -339,8 +331,8 @@ export const Functor: Functor1<URI> = {
  */
 export const Apply: Apply1<URI> = {
   URI,
-  map: map_,
-  ap: ap_,
+  map: _map,
+  ap: _ap,
 }
 
 /**
@@ -349,8 +341,8 @@ export const Apply: Apply1<URI> = {
  */
 export const Applicative: Applicative1<URI> = {
   URI,
-  map: map_,
-  ap: ap_,
+  map: _map,
+  ap: _ap,
   of,
 }
 
@@ -358,12 +350,36 @@ export const Applicative: Applicative1<URI> = {
  * @since 0.1.0
  * @category Instances
  */
+export const Chain: Chain1<URI> = {
+  URI,
+  map: _map,
+  ap: _ap,
+  chain: _chain,
+}
+
+/**
+ * Composes computations in sequence, using the return value of one computation
+ * to determine the next computation and keeping only the result of the first.
+ *
+ * Derivable from `Monad`.
+ *
+ * @since 0.1.0
+ * @category Combinators
+ */
+export const chainFirst: <A, B>(
+  f: (a: A) => Wonka.Source<B>
+) => (ma: Wonka.Source<A>) => Wonka.Source<A> = chainFirst_(Chain)
+
+/**
+ * @since 0.1.0
+ * @category Instances
+ */
 export const Monad: Monad1<URI> = {
   URI,
-  map: map_,
-  ap: ap_,
+  map: _map,
+  ap: _ap,
   of,
-  chain: chain_,
+  chain: _chain,
 }
 
 /**
@@ -372,8 +388,8 @@ export const Monad: Monad1<URI> = {
  */
 export const Alt: Alt1<URI> = {
   URI,
-  map: map_,
-  alt: alt_,
+  map: _map,
+  alt: _alt,
 }
 
 /**
@@ -382,10 +398,10 @@ export const Alt: Alt1<URI> = {
  */
 export const Alternative: Alternative1<URI> = {
   URI,
-  map: map_,
-  ap: ap_,
+  map: _map,
+  ap: _ap,
   of,
-  alt: alt_,
+  alt: _alt,
   zero,
 }
 
@@ -407,11 +423,11 @@ export const Filterable: Filterable1<URI> = {
   URI,
   compact,
   separate,
-  map: map_,
-  filter: filter_,
-  filterMap: filterMap_,
-  partition: partition_,
-  partitionMap: partitionMap_,
+  map: _map,
+  filter: _filter,
+  filterMap: _filterMap,
+  partition: _partition,
+  partitionMap: _partitionMap,
 }
 
 /**
@@ -420,10 +436,10 @@ export const Filterable: Filterable1<URI> = {
  */
 export const MonadIO: MonadIO1<URI> = {
   URI,
-  map: map_,
-  ap: ap_,
+  map: _map,
+  ap: _ap,
   of,
-  chain: chain_,
+  chain: _chain,
   fromIO,
 }
 
@@ -433,10 +449,10 @@ export const MonadIO: MonadIO1<URI> = {
  */
 export const MonadTask: MonadTask1<URI> = {
   URI,
-  map: map_,
-  ap: ap_,
+  map: _map,
+  ap: _ap,
   of,
-  chain: chain_,
+  chain: _chain,
   fromIO,
   fromTask,
 }
@@ -447,10 +463,10 @@ export const MonadTask: MonadTask1<URI> = {
  */
 export const MonadSource: MonadSource1<URI> = {
   URI,
-  map: map_,
-  ap: ap_,
+  map: _map,
+  ap: _ap,
   of,
-  chain: chain_,
+  chain: _chain,
   fromIO,
   fromTask,
   fromSource: identity,
@@ -466,24 +482,14 @@ export const Do: Wonka.Source<Record<PropertyKey, unknown>> =
   of({})
 
 /** @since 0.1.0 */
-export const bindTo = <K extends string, A>(
-  name: K
-): ((fa: Wonka.Source<A>) => Wonka.Source<{ [P in K]: A }>) =>
-  map((a) => ({ [name]: a } as { [P in K]: A }))
+export const bindTo =
+  /*#__PURE__*/
+  bindTo_(Functor)
 
 /** @since 0.1.0 */
-export const bind = <K extends string, A, B>(
-  name: Exclude<K, keyof A>,
-  f: (a: A) => Wonka.Source<B>
-): ((
-  fa: Wonka.Source<A>
-) => Wonka.Source<{ [P in keyof A | K]: P extends keyof A ? A[P] : B }>) =>
-  chain((a) =>
-    pipe(
-      f(a),
-      map((b) => ({ ...a, [name]: b } as any))
-    )
-  )
+export const bind =
+  /*#__PURE__*/
+  bind_(Chain)
 
 /** @since 0.1.0 */
 export const toTask =

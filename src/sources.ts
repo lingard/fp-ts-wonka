@@ -3,7 +3,7 @@
  * @internal
  */
 import * as Wonka from 'wonka'
-import { Lazy } from 'fp-ts/function'
+import { Lazy, pipe } from 'fp-ts/function'
 
 /**
  * @since 0.1.0
@@ -16,3 +16,12 @@ export const defer =
 
     return source(sink)
   }
+
+/**
+ * @since 0.1.0
+ * @internal
+ */
+export const bufferTime =
+  (wait: number) =>
+  <A>(sa: Wonka.Source<A>): Wonka.Source<A[]> =>
+    pipe(sa, Wonka.buffer(Wonka.interval(wait)))
