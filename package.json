@@ -1,0 +1,62 @@
+{
+  "name": "fp-ts-wonka",
+  "version": "0.1.0",
+  "main": "lib/index.js",
+  "module": "es6/index.js",
+  "typings": "lib/index.d.ts",
+  "homepage": "https://github.com/lingard/fp-ts-wonka",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lingard/fp-ts-wonka.git"
+  },
+  "bugs": {
+    "url": "https://github.com/lingard/fp-ts-wonka/issues"
+  },
+  "tags": [
+    "fp-ts",
+    "wonka"
+  ],
+  "keywords": [
+    "fp-ts",
+    "wonka"
+  ],
+  "license": "MIT",
+  "scripts": {
+    "prebuild": "npm run clean",
+    "build": "tsc -p ./tsconfig.build.json && tsc -p ./tsconfig.build-es6.json && ts-node scripts/build",
+    "build:watch": "tsc -w -p tsconfig.build.json",
+    "postbuild": "prettier --loglevel=silent --write \"./dist/**/*.ts\"",
+    "prepublishOnly": "ts-node scripts/pre-publish",
+    "prepublish": "yarn run build",
+    "pretty": "yarn run prettier --check .",
+    "lint": "yarn run eslint . --ext .js,.jsx,.ts,.tsx --max-warnings 0",
+    "test": "yarn run jest",
+    "test:watch": "yarn run jest --watch",
+    "docs": "yarn run docs-ts",
+    "prerelease": "npm run build",
+    "release": "ts-node scripts/release",
+    "clean": "rimraf ./dist"
+  },
+  "peerDependencies": {
+    "fp-ts": "^2.11.5",
+    "wonka": "^4.0.15"
+  },
+  "devDependencies": {
+    "@types/glob": "^7.2.0",
+    "@types/jest": "^26.0.20",
+    "@typescript-eslint/eslint-plugin": "^4.25.0",
+    "@typescript-eslint/parser": "^4.25.0",
+    "docs-ts": "^0.6.10",
+    "eslint": "^7.27.0",
+    "eslint-config-prettier": "^8.3.0",
+    "eslint-plugin-prettier": "^4.0.0",
+    "fp-ts": "^2.11.5",
+    "glob": "^7.2.0",
+    "jest": "^26.6.3",
+    "prettier": "^2.2.1",
+    "prettier-plugin-jsdoc": "^0.3.13",
+    "ts-jest": "^26.5.3",
+    "typescript": "^4.2.3",
+    "wonka": "^4.0.15"
+  }
+}
