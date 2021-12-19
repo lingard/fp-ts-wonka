@@ -196,4 +196,11 @@ describe('Source', () => {
 
     assert.deepStrictEqual(t, [{ a: 1, b: 'b' }])
   })
+
+  it('apS', () => {
+    assert.deepStrictEqual(
+      pipe(_.of(1), _.bindTo('a'), _.apS('b', _.of('b')), Wonka.toArray),
+      [{ a: 1, b: 'b' }]
+    )
+  })
 })

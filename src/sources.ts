@@ -11,11 +11,8 @@ import { Lazy, pipe } from 'fp-ts/function'
  */
 export const defer =
   <A>(fa: Lazy<Wonka.Source<A>>): Wonka.Source<A> =>
-  (sink) => {
-    const source = Wonka.share(fa())
-
-    return source(sink)
-  }
+  (sink) =>
+    fa()(sink)
 
 /**
  * @since 0.1.0

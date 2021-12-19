@@ -11,7 +11,7 @@
 import { Alt1 } from 'fp-ts/Alt'
 import { Alternative1 } from 'fp-ts/Alternative'
 import { Applicative1 } from 'fp-ts/Applicative'
-import { Apply1 } from 'fp-ts/Apply'
+import { Apply1, apS as apS_ } from 'fp-ts/Apply'
 import { Compactable1 } from 'fp-ts/Compactable'
 import { Separated } from 'fp-ts/Separated'
 import * as E from 'fp-ts/Either'
@@ -30,31 +30,71 @@ import * as Wonka from 'wonka'
 import { MonadSource1 } from './MonadSource'
 import { Task } from 'fp-ts/lib/Task'
 import { defer } from './sources'
+import { Pointed1 } from 'fp-ts/lib/Pointed'
 
 // -------------------------------------------------------------------------------------
-// constructors
+// model
 // -------------------------------------------------------------------------------------
 
 /**
  * @since 0.1.0
- * @category Constructors
+ * @category Model
+ */
+export type Source<A> = Wonka.Source<A>
+
+// -------------------------------------------------------------------------------------
+// natural transformations
+// -------------------------------------------------------------------------------------
+
+/**
+ * @since 0.1.0
+ * @category Natural transformations
  */
 export const fromOption = <A>(o: O.Option<A>): Wonka.Source<A> =>
   O.isNone(o) ? Wonka.empty : Wonka.fromValue(o.value)
 
 /**
  * @since 0.1.0
- * @category Constructors
+ * @category Natural transformations
  */
 export const fromIO: MonadIO1<URI>['fromIO'] = (ma) =>
   defer(() => Wonka.fromValue(ma()))
 
 /**
  * @since 0.1.0
- * @category Constructors
+ * @category Natural transformations
  */
 export const fromTask: MonadTask1<URI>['fromTask'] = (ma) =>
   defer(() => Wonka.fromPromise(ma()))
+
+// -------------------------------------------------------------------------------------
+// non-pipeables
+// -------------------------------------------------------------------------------------
+
+const _map: Functor1<URI>['map'] = (fa, f) => pipe(fa, map(f))
+const _ap: Apply1<URI>['ap'] = (fab, fa) => pipe(fab, ap(fa))
+/* istanbul ignore next */
+const _chain: Monad1<URI>['chain'] = (fa, f) => pipe(fa, chain(f))
+/* istanbul ignore next */
+const _alt: Alt1<URI>['alt'] = (me, that) => pipe(me, alt(that))
+/* istanbul ignore next */
+const _filter: Filterable1<URI>['filter'] = <A>(
+  fa: Wonka.Source<A>,
+  p: Predicate<A>
+) => pipe(fa, filter(p))
+/* istanbul ignore next */
+const _filterMap: Filterable1<URI>['filterMap'] = <A, B>(
+  fa: Wonka.Source<A>,
+  f: (a: A) => O.Option<B>
+) => pipe(fa, filterMap(f))
+/* istanbul ignore next */
+const _partition: Filterable1<URI>['partition'] = <A>(
+  fa: Wonka.Source<A>,
+  p: Predicate<A>
+) => pipe(fa, partition(p))
+/* istanbul ignore next */
+const _partitionMap: Filterable1<URI>['partitionMap'] = (fa, f) =>
+  pipe(fa, partitionMap(f))
 
 // -------------------------------------------------------------------------------------
 // type class members
@@ -86,6 +126,16 @@ export const ap: <A>(
     Wonka.combine(fab, fa),
     Wonka.map(([f, a]) => f(a))
   )
+
+/**
+ * Apply a function to an argument under a type constructor.
+ *
+ * @since 0.1.0
+ * @category Apply
+ */
+export const apW: <A>(
+  fa: Source<A>
+) => <B>(fab: Source<(a: A) => B>) => Source<B> = ap as any
 
 /**
  * Combine two effectful actions, keeping only the result of the first.
@@ -121,9 +171,9 @@ export const apSecond = <B>(
 
 /**
  * @since 0.1.0
- * @category Applicative
+ * @category Pointed
  */
-export const of: Applicative1<URI>['of'] = Wonka.fromValue
+export const of: Pointed1<URI>['of'] = Wonka.fromValue
 
 /**
  * Composes computations in sequence, using the return value of one computation
@@ -254,31 +304,6 @@ export const zero: Alternative1<URI>['zero'] = () => Wonka.empty
 // instances
 // -------------------------------------------------------------------------------------
 
-const _map: Functor1<URI>['map'] = (fa, f) => pipe(fa, map(f))
-const _ap: Apply1<URI>['ap'] = (fab, fa) => pipe(fab, ap(fa))
-/* istanbul ignore next */
-const _chain: Monad1<URI>['chain'] = (fa, f) => pipe(fa, chain(f))
-/* istanbul ignore next */
-const _alt: Alt1<URI>['alt'] = (me, that) => pipe(me, alt(that))
-/* istanbul ignore next */
-const _filter: Filterable1<URI>['filter'] = <A>(
-  fa: Wonka.Source<A>,
-  p: Predicate<A>
-) => pipe(fa, filter(p))
-/* istanbul ignore next */
-const _filterMap: Filterable1<URI>['filterMap'] = <A, B>(
-  fa: Wonka.Source<A>,
-  f: (a: A) => O.Option<B>
-) => pipe(fa, filterMap(f))
-/* istanbul ignore next */
-const _partition: Filterable1<URI>['partition'] = <A>(
-  fa: Wonka.Source<A>,
-  p: Predicate<A>
-) => pipe(fa, partition(p))
-/* istanbul ignore next */
-const _partitionMap: Filterable1<URI>['partitionMap'] = (fa, f) =>
-  pipe(fa, partitionMap(f))
-
 /**
  * @since 0.1.0
  * @category Instances
@@ -313,6 +338,15 @@ export const getMonoid = <A = never>(): Monoid<Wonka.Source<A>> => ({
 export const Functor: Functor1<URI> = {
   URI,
   map: _map,
+}
+
+/**
+ * @since 0.1.0
+ * @category Instances
+ */
+export const Pointed: Pointed1<URI> = {
+  URI,
+  of,
 }
 
 /**
@@ -473,7 +507,7 @@ export const MonadSource: MonadSource1<URI> = {
 }
 
 // -------------------------------------------------------------------------------------
-// utils
+// do notation
 // -------------------------------------------------------------------------------------
 
 /** @since 0.1.0 */
@@ -491,8 +525,30 @@ export const bind =
   /*#__PURE__*/
   bind_(Chain)
 
+// -------------------------------------------------------------------------------------
+// pipeable sequence S
+// -------------------------------------------------------------------------------------
+
+/** @since 0.1.0 */
+export const apS =
+  /*#__PURE__*/
+  apS_(Apply)
+
+/** @since 0.1.0 */
+export const apSW: <A, N extends string, B>(
+  name: Exclude<N, keyof A>,
+  fb: Source<B>
+) => (
+  fa: Source<A>
+) => Source<{ readonly [K in keyof A | N]: K extends keyof A ? A[K] : B }> =
+  apS as any
+
+// -------------------------------------------------------------------------------------
+// utils
+// -------------------------------------------------------------------------------------
+
 /** @since 0.1.0 */
 export const toTask =
   <A>(s: Wonka.Source<A>): Task<A> =>
   () =>
-    pipe(s, Wonka.toPromise)
+    Wonka.toPromise(s)

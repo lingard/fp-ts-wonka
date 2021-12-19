@@ -1,7 +1,7 @@
 /** @since 0.1.0 */
 import { Alt2 } from 'fp-ts/Alt'
 import { Applicative2 } from 'fp-ts/Applicative'
-import { Apply2 } from 'fp-ts/Apply'
+import { Apply2, apS as apS_ } from 'fp-ts/Apply'
 import { Bifunctor2 } from 'fp-ts/Bifunctor'
 import * as E from 'fp-ts/Either'
 import * as ET from 'fp-ts/EitherT'
@@ -21,6 +21,7 @@ import * as TE from 'fp-ts/TaskEither'
 import * as Wonka from 'wonka'
 import { MonadSource2 } from './MonadSource'
 import * as S from './Source'
+import { Pointed2 } from 'fp-ts/lib/Pointed'
 
 // -------------------------------------------------------------------------------------
 // model
@@ -42,7 +43,7 @@ export type SourceEither<E, A> = Wonka.Source<E.Either<E, A>>
  */
 export const left: <E = never, A = never>(e: E) => SourceEither<E, A> =
   /*#__PURE__*/
-  ET.left(S.Monad)
+  ET.left(S.Pointed)
 
 /**
  * @since 0.1.0
@@ -50,7 +51,7 @@ export const left: <E = never, A = never>(e: E) => SourceEither<E, A> =
  */
 export const right: <E = never, A = never>(a: A) => SourceEither<E, A> =
   /*#__PURE__*/
-  ET.right(S.Monad)
+  ET.right(S.Pointed)
 
 /**
  * @since 0.1.0
@@ -72,16 +73,20 @@ export const leftSource: <E = never, A = never>(
   /*#__PURE__*/
   S.map(E.left)
 
+// -------------------------------------------------------------------------------------
+// natural transformations
+// -------------------------------------------------------------------------------------
+
 /**
  * @since 0.1.0
- * @category Constructors
+ * @category Natural transformations
  */
 export const fromIOEither: <E, A>(fa: IOEither<E, A>) => SourceEither<E, A> =
   S.fromIO
 
 /**
  * @since 0.1.0
- * @category Constructors
+ * @category Natural transformations
  */
 export const rightIO: <E = never, A = never>(ma: IO<A>) => SourceEither<E, A> =
   /*#__PURE__*/
@@ -89,7 +94,7 @@ export const rightIO: <E = never, A = never>(ma: IO<A>) => SourceEither<E, A> =
 
 /**
  * @since 0.1.0
- * @category Constructors
+ * @category Natural transformations
  */
 export const leftIO: <E = never, A = never>(me: IO<E>) => SourceEither<E, A> =
   /*#__PURE__*/
@@ -97,7 +102,7 @@ export const leftIO: <E = never, A = never>(me: IO<E>) => SourceEither<E, A> =
 
 /**
  * @since 0.1.0
- * @category Constructors
+ * @category Natural transformations
  */
 export const fromTaskEither: <E, A>(
   t: TE.TaskEither<E, A>
@@ -105,13 +110,13 @@ export const fromTaskEither: <E, A>(
 
 /**
  * @since 0.1.0
- * @category Constructors
+ * @category Natural transformations
  */
 export const fromIO: MonadIO2<URI>['fromIO'] = rightIO
 
 /**
  * @since 0.1.0
- * @category Constructors
+ * @category Natural transformations
  */
 export const fromTask: MonadTask2<URI>['fromTask'] =
   /*#__PURE__*/
@@ -119,7 +124,7 @@ export const fromTask: MonadTask2<URI>['fromTask'] =
 
 /**
  * @since 0.1.0
- * @category Constructors
+ * @category Natural transformations
  */
 export const fromSource: MonadSource2<URI>['fromSource'] = rightSource
 
@@ -262,6 +267,23 @@ export const orLeft: <E1, E2>(
  */
 export const swap: <E, A>(ma: SourceEither<E, A>) => SourceEither<A, E> =
   ET.swap(S.Functor)
+
+// -------------------------------------------------------------------------------------
+// non-pipeables
+// -------------------------------------------------------------------------------------
+
+/* istanbul ignore next */
+const _map: Functor2<URI>['map'] = (fa, f) => pipe(fa, map(f))
+/* istanbul ignore next */
+const _ap: Apply2<URI>['ap'] = (fab, fa) => pipe(fab, ap(fa))
+/* istanbul ignore next */
+const _chain: Monad2<URI>['chain'] = (ma, f) => pipe(ma, chain(f))
+/* istanbul ignore next */
+const _biMap: Bifunctor2<URI>['bimap'] = (fea, f, g) => pipe(fea, bimap(f, g))
+/* istanbul ignore next */
+const _mapLeft: Bifunctor2<URI>['mapLeft'] = (fea, f) => pipe(fea, mapLeft(f))
+/* istanbul ignore next */
+const _alt: Alt2<URI>['alt'] = (fx, fy) => pipe(fx, alt(fy))
 
 // -------------------------------------------------------------------------------------
 // type class members
@@ -456,19 +478,6 @@ declare module 'fp-ts/lib/HKT' {
   }
 }
 
-/* istanbul ignore next */
-const _map: Functor2<URI>['map'] = (fa, f) => pipe(fa, map(f))
-/* istanbul ignore next */
-const _ap: Apply2<URI>['ap'] = (fab, fa) => pipe(fab, ap(fa))
-/* istanbul ignore next */
-const _chain: Monad2<URI>['chain'] = (ma, f) => pipe(ma, chain(f))
-/* istanbul ignore next */
-const _biMap: Bifunctor2<URI>['bimap'] = (fea, f, g) => pipe(fea, bimap(f, g))
-/* istanbul ignore next */
-const _mapLeft: Bifunctor2<URI>['mapLeft'] = (fea, f) => pipe(fea, mapLeft(f))
-/* istanbul ignore next */
-const _alt: Alt2<URI>['alt'] = (fx, fy) => pipe(fx, alt(fy))
-
 /**
  * @since 0.1.0
  * @category Instances
@@ -487,6 +496,15 @@ export const Functor: Functor2<URI> = {
 export const flap =
   /*#__PURE__*/
   flap_(Functor)
+
+/**
+ * @since 0.1.0
+ * @category Instances
+ */
+export const Pointed: Pointed2<URI> = {
+  URI,
+  of,
+}
 
 /**
  * @since 0.1.0
@@ -636,7 +654,7 @@ export const MonadThrow: MonadThrow2<URI> = {
 }
 
 // -------------------------------------------------------------------------------------
-// utils
+// do notation
 // -------------------------------------------------------------------------------------
 
 /** @since 0.1.0 */
@@ -664,6 +682,30 @@ export const bindW: <N extends string, A, E2, B>(
   E1 | E2,
   { readonly [K in keyof A | N]: K extends keyof A ? A[K] : B }
 > = bind as any
+
+// -------------------------------------------------------------------------------------
+// pipeable sequence S
+// -------------------------------------------------------------------------------------
+
+/** @since 0.1.0 */
+export const apS =
+  /*#__PURE__*/
+  apS_(Apply)
+
+/** @since 0.1.0 */
+export const apSW: <A, N extends string, E2, B>(
+  name: Exclude<N, keyof A>,
+  fb: SourceEither<E2, B>
+) => <E1>(
+  fa: SourceEither<E1, A>
+) => SourceEither<
+  E1 | E2,
+  { readonly [K in keyof A | N]: K extends keyof A ? A[K] : B }
+> = apS as any
+
+// -------------------------------------------------------------------------------------
+// utils
+// -------------------------------------------------------------------------------------
 
 /** @since 0.1.0 */
 export const toTaskEither: <E, A>(

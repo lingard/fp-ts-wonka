@@ -312,6 +312,13 @@ describe('SourceEither', () => {
     assert.deepStrictEqual(t, [E.right({ a: 1, b: 'b' })])
   })
 
+  it('apS', () => {
+    assert.deepStrictEqual(
+      pipe(_.right(1), _.bindTo('a'), _.apS('b', _.right('b')), Wonka.toArray),
+      [E.right({ a: 1, b: 'b' })]
+    )
+  })
+
   it('fromOption', () => {
     assert.deepStrictEqual(
       pipe(_.fromOption(() => 'a')(O.some(1)), Wonka.toArray),
