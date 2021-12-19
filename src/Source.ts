@@ -85,7 +85,6 @@ export const ap: <A>(
     Wonka.combine(fab, fa),
     Wonka.map(([f, a]) => f(a))
   )
-// combineLatest([fab, fa]).pipe(Wonka.map(([f, a]) => f(a)))
 
 /**
  * Combine two effectful actions, keeping only the result of the first.
@@ -123,7 +122,6 @@ export const apSecond = <B>(
  * @since 0.1.0
  * @category Applicative
  */
-// tslint:disable-next-line: deprecation
 export const of: Applicative1<URI>['of'] = Wonka.fromValue
 
 /**
