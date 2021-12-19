@@ -56,453 +56,323 @@ describe('SourceEither', () => {
     assert.deepStrictEqual(events, [E.right(1)])
   })
 
-  it('match left', async () => {
+  it('match left', () => {
     const f = (n: number): Wonka.Source<number> => S.of(n * 2)
     const g = (n: number): Wonka.Source<number> => S.of(n * 3)
-    const events = await pipe(
-      _.left(2),
-      _.match(f, g),
-      bufferTime(10),
-      Wonka.toPromise
-    )
+    const events = pipe(_.left(2), _.match(f, g), Wonka.toArray)
 
     assert.deepStrictEqual(events, [4])
   })
 
-  it('match right', async () => {
+  it('match right', () => {
     const f = (n: number): Wonka.Source<number> => S.of(n * 2)
     const g = (n: number): Wonka.Source<number> => S.of(n * 3)
-    const events = await pipe(
-      _.right(3),
-      _.match(f, g),
-      bufferTime(10),
-      Wonka.toPromise
-    )
+    const events = pipe(_.right(3), _.match(f, g), Wonka.toArray)
     assert.deepStrictEqual(events, [9])
   })
 
-  it('matchE', async () => {
+  it('matchE', () => {
     const f = _.matchE(
       () => S.of('left'),
       () => S.of('right')
     )
-    const left = await pipe(f(_.left('')), Wonka.toPromise)
-    const right = await pipe(f(_.right(1)), Wonka.toPromise)
+    const left = pipe(f(_.left('')), Wonka.toArray)
+    const right = pipe(f(_.right(1)), Wonka.toArray)
 
-    assert.deepStrictEqual(right, 'right')
-    assert.deepStrictEqual(left, 'left')
+    assert.deepStrictEqual(right, ['right'])
+    assert.deepStrictEqual(left, ['left'])
   })
 
-  it('getOrElse', async () => {
+  it('getOrElse', () => {
     const onLeft = (s: string): Wonka.Source<number> => S.of(s.length)
-    const left = await pipe(
-      _.left('four'),
-      _.getOrElse(onLeft),
-      bufferTime(10),
-      Wonka.toPromise
-    )
-    const right = await pipe(
-      _.right(1),
-      _.getOrElse(onLeft),
-      bufferTime(10),
-      Wonka.toPromise
-    )
+    const left = pipe(_.left('four'), _.getOrElse(onLeft), Wonka.toArray)
+    const right = pipe(_.right(1), _.getOrElse(onLeft), Wonka.toArray)
 
     assert.deepStrictEqual(left, [4])
     assert.deepStrictEqual(right, [1])
   })
 
-  it('orElse', async () => {
+  it('orElse', () => {
     const onLeft = (s: string): _.SourceEither<number, number> =>
       _.left(s.length)
-    const left = await pipe(
-      _.left('four'),
-      _.orElse(onLeft),
-      bufferTime(10),
-      Wonka.toPromise
-    )
-    const right = await pipe(
-      _.right(1),
-      _.orElse(onLeft),
-      bufferTime(10),
-      Wonka.toPromise
-    )
+    const left = pipe(_.left('four'), _.orElse(onLeft), Wonka.toArray)
+    const right = pipe(_.right(1), _.orElse(onLeft), Wonka.toArray)
 
     assert.deepStrictEqual(left, [E.left(4)])
     assert.deepStrictEqual(right, [E.right(1)])
   })
 
-  it('orElseFirst', async () => {
+  it('orElseFirst', () => {
     const f = _.orElseFirst((e: string) =>
       e.length <= 1 ? _.right(true) : _.left(e + '!')
     )
 
-    assert.deepStrictEqual(
-      await pipe(_.right(1), f, Wonka.toPromise),
-      E.right(1)
-    )
-    assert.deepStrictEqual(
-      await pipe(_.left('a'), f, Wonka.toPromise),
-      E.left('a')
-    )
-    assert.deepStrictEqual(
-      await pipe(_.left('aa'), f, Wonka.toPromise),
-      E.left('aa!')
-    )
+    assert.deepStrictEqual(pipe(_.right(1), f, Wonka.toArray), [E.right(1)])
+    assert.deepStrictEqual(pipe(_.left('a'), f, Wonka.toArray), [E.left('a')])
+    assert.deepStrictEqual(pipe(_.left('aa'), f, Wonka.toArray), [
+      E.left('aa!'),
+    ])
   })
 
-  it('orElseFirstW', async () => {
+  it('orElseFirstW', () => {
     const f = _.orElseFirstW((e: string) =>
       e.length <= 1 ? _.right(true) : _.left(e + '!')
     )
 
-    assert.deepStrictEqual(
-      await pipe(_.right(1), f, Wonka.toPromise),
-      E.right(1)
-    )
-    assert.deepStrictEqual(
-      await pipe(_.left('a'), f, Wonka.toPromise),
-      E.left('a')
-    )
-    assert.deepStrictEqual(
-      await pipe(_.left('aa'), f, Wonka.toPromise),
-      E.left('aa!')
-    )
+    assert.deepStrictEqual(pipe(_.right(1), f, Wonka.toArray), [E.right(1)])
+    assert.deepStrictEqual(pipe(_.left('a'), f, Wonka.toArray), [E.left('a')])
+    assert.deepStrictEqual(pipe(_.left('aa'), f, Wonka.toArray), [
+      E.left('aa!'),
+    ])
   })
 
-  it('orLeft', async () => {
+  it('orLeft', () => {
     const f = _.orLeft((e: string) => S.of(e + '!'))
 
-    assert.deepStrictEqual(
-      await pipe(_.right(1), f, Wonka.toPromise),
-      E.right(1)
-    )
-    assert.deepStrictEqual(
-      await pipe(_.left('a'), f, Wonka.toPromise),
-      E.left('a!')
-    )
+    assert.deepStrictEqual(pipe(_.right(1), f, Wonka.toArray), [E.right(1)])
+    assert.deepStrictEqual(pipe(_.left('a'), f, Wonka.toArray), [E.left('a!')])
   })
 
-  it('swap left to right', async () => {
-    const e = await pipe(_.left(1), _.swap, bufferTime(10), Wonka.toPromise)
+  it('swap left to right', () => {
+    const e = pipe(_.left(1), _.swap, Wonka.toArray)
+
     assert.deepStrictEqual(e, [E.right(1)])
   })
 
-  it('swap right to left', async () => {
-    const e = await pipe(_.right(1), _.swap, bufferTime(10), Wonka.toPromise)
+  it('swap right to left', () => {
+    const e = pipe(_.right(1), _.swap, Wonka.toArray)
+
     assert.deepStrictEqual(e, [E.left(1)])
   })
 
   describe('Monad', () => {
-    it('of', async () => {
+    it('of', () => {
       const fea = _.of(1)
-      const x = await pipe(fea, bufferTime(10), Wonka.toPromise)
+      const x = pipe(fea, Wonka.toArray)
 
       assert.deepStrictEqual(x, [E.right(1)])
     })
 
-    it('map', async () => {
+    it('map', () => {
       const double = (n: number): number => n * 2
-      const x = await pipe(
-        _.right(1),
-        _.map(double),
-        bufferTime(10),
-        Wonka.toPromise
-      )
+      const x = pipe(_.right(1), _.map(double), Wonka.toArray)
+
       assert.deepStrictEqual(x, [E.right(2)])
     })
 
-    it('ap', async () => {
+    it('ap', () => {
       const double = (n: number): number => n * 2
       const mab = _.right(double)
       const ma = _.right(1)
-      const x = await pipe(mab, _.ap(ma), bufferTime(10), Wonka.toPromise)
+      const x = pipe(mab, _.ap(ma), Wonka.toArray)
+
       assert.deepStrictEqual(x, [E.right(2)])
     })
 
-    it('chain', async () => {
+    it('chain', () => {
       const f = (a: string): _.SourceEither<string, number> =>
         a.length > 2 ? _.right(a.length) : _.left('text')
-      const e1 = await pipe(
-        _.right('four'),
-        _.chain(f),
-        bufferTime(10),
-        Wonka.toPromise
-      )
+      const e1 = pipe(_.right('four'), _.chain(f), Wonka.toArray)
 
       assert.deepStrictEqual(e1, [E.right(4)])
 
-      const e2 = await pipe(
-        _.right('a'),
-        _.chain(f),
-        bufferTime(10),
-        Wonka.toPromise
-      )
+      const e2 = pipe(_.right('a'), _.chain(f), Wonka.toArray)
 
       assert.deepStrictEqual(e2, [E.left('text')])
 
-      const e3 = await pipe(
-        _.left('b'),
-        _.chain(f),
-        bufferTime(10),
-        Wonka.toPromise
-      )
+      const e3 = pipe(_.left('b'), _.chain(f), Wonka.toArray)
 
       assert.deepStrictEqual(e3, [E.left('b')])
     })
 
-    it('left identity', async () => {
+    it('left identity', () => {
       const f = (a: string): _.SourceEither<string, number> =>
         a.length > 2 ? _.right(a.length) : _.left('text')
       const a = 'text'
-      const e1 = await pipe(
-        _.of<string, string>(a),
-        _.chain(f),
-        bufferTime(10),
-        Wonka.toPromise
-      )
-      const e2 = await pipe(f(a), bufferTime(10), Wonka.toPromise)
+      const e1 = pipe(_.of<string, string>(a), _.chain(f), Wonka.toArray)
+      const e2 = pipe(f(a), Wonka.toArray)
 
       assert.deepStrictEqual(e1, e2)
     })
 
-    it('right identity', async () => {
+    it('right identity', () => {
       const fa = _.of(1)
-      const e1 = await pipe(fa, _.chain(_.of), bufferTime(10), Wonka.toPromise)
-      const e2 = await pipe(fa, bufferTime(10), Wonka.toPromise)
+      const e1 = pipe(fa, _.chain(_.of), Wonka.toArray)
+      const e2 = pipe(fa, Wonka.toArray)
 
       assert.deepStrictEqual(e1, e2)
     })
   })
 
-  it('apFirst', async () => {
+  it('apFirst', () => {
     assert.deepStrictEqual(
-      await pipe(_.right('a'), _.apFirst(_.right('b')), Wonka.toPromise),
-      E.right('a')
+      pipe(_.right('a'), _.apFirst(_.right('b')), Wonka.toArray),
+      [E.right('a')]
     )
 
-    const events = await pipe(
-      _.right(1),
-      _.apFirst(_.right(2)),
-      bufferTime(10),
-      Wonka.toPromise
-    )
+    const events = pipe(_.right(1), _.apFirst(_.right(2)), Wonka.toArray)
 
     assert.deepStrictEqual(events, [E.right(1)])
   })
 
-  it('apSecond', async () => {
+  it('apSecond', () => {
     assert.deepStrictEqual(
-      await pipe(_.right('a'), _.apSecond(_.right('b')), Wonka.toPromise),
-      E.right('b')
+      pipe(_.right('a'), _.apSecond(_.right('b')), Wonka.toArray),
+      [E.right('b')]
     )
 
-    const events = await pipe(
-      _.right(1),
-      _.apSecond(_.right(2)),
-      bufferTime(10),
-      Wonka.toPromise
-    )
+    const events = pipe(_.right(1), _.apSecond(_.right(2)), Wonka.toArray)
 
     assert.deepStrictEqual(events, [E.right(2)])
   })
 
-  it('chainFirst', async () => {
+  it('chainFirst', () => {
     const f = (a: string): _.SourceEither<string, number> =>
       a.length > 2 ? _.right(a.length) : _.left('b')
-    const e1 = await pipe(
-      _.right('aaaa'),
-      _.chainFirst(f),
-      bufferTime(10),
-      Wonka.toPromise
-    )
+    const e1 = pipe(_.right('aaaa'), _.chainFirst(f), Wonka.toArray)
 
     assert.deepStrictEqual(e1, [E.right('aaaa')])
   })
 
   describe('Bifunctor', () => {
-    it('bimap', async () => {
+    it('bimap', () => {
       const f = (s: string): number => s.length
       const g = (n: number): boolean => n > 2
 
-      const e1 = await pipe(
-        _.right(1),
-        _.bimap(f, g),
-        bufferTime(10),
-        Wonka.toPromise
-      )
+      const e1 = pipe(_.right(1), _.bimap(f, g), Wonka.toArray)
       assert.deepStrictEqual(e1, [E.right(false)])
-      const e2 = await pipe(
-        _.left('foo'),
-        _.bimap(f, g),
-        bufferTime(10),
-        Wonka.toPromise
-      )
+      const e2 = pipe(_.left('foo'), _.bimap(f, g), Wonka.toArray)
       assert.deepStrictEqual(e2, [E.left(3)])
     })
 
-    it('mapLeft', async () => {
+    it('mapLeft', () => {
       const double = (n: number): number => n * 2
-      const e = await pipe(
-        _.left(1),
-        _.mapLeft(double),
-        bufferTime(10),
-        Wonka.toPromise
-      )
+      const e = pipe(_.left(1), _.mapLeft(double), Wonka.toArray)
+
       assert.deepStrictEqual(e, [E.left(2)])
     })
   })
 
   describe('Alt', () => {
-    it('alt right right', async () => {
+    it('alt right right', () => {
       const fx = _.right(1)
       const fy = () => _.right(2)
-      const e1 = await pipe(fx, _.alt(fy), bufferTime(10), Wonka.toPromise)
+      const e1 = pipe(fx, _.alt(fy), Wonka.toArray)
 
       assert.deepStrictEqual(e1, [E.right(1)])
     })
 
-    it('alt left right', async () => {
+    it('alt left right', () => {
       const fx = _.left<number, number>(1)
       const fy = () => _.right<number, number>(2)
-      const e1 = await pipe(fx, _.alt(fy), bufferTime(10), Wonka.toPromise)
+      const e1 = pipe(fx, _.alt(fy), Wonka.toArray)
 
       assert.deepStrictEqual(e1, [E.right(2)])
     })
 
-    it('associativity', async () => {
+    it('associativity', () => {
       const fa = _.left<number, number>(1)
       const ga = () => _.right<number, number>(2)
       const ha = () => _.right<number, number>(3)
 
-      const e1 = await pipe(
-        pipe(fa, _.alt(ga)),
-        _.alt(ha),
-        bufferTime(10),
-        Wonka.toPromise
-      )
+      const e1 = pipe(pipe(fa, _.alt(ga)), _.alt(ha), Wonka.toArray)
 
-      const e2 = await pipe(
+      const e2 = pipe(
         fa,
         _.alt(() => pipe(ga(), _.alt(ha))),
-        bufferTime(10),
-        Wonka.toPromise
+        Wonka.toArray
       )
 
       assert.deepStrictEqual(e1, e2)
     })
 
-    it('distributivity', async () => {
+    it('distributivity', () => {
       const double = (n: number): number => n * 2
       const fx = _.left<string, number>('left')
       const fy = () => _.right<string, number>(1)
-
-      const e1 = await pipe(
-        fx,
-        _.alt(fy),
-        _.map(double),
-        bufferTime(10),
-        Wonka.toPromise
-      )
-
-      const e2 = await pipe(
+      const e1 = pipe(fx, _.alt(fy), _.map(double), Wonka.toArray)
+      const e2 = pipe(
         pipe(fx, _.map(double)),
         _.alt(() => pipe(fy(), _.map(double))),
-        bufferTime(10),
-        Wonka.toPromise
+        Wonka.toArray
       )
 
       assert.deepStrictEqual(e1, e2)
     })
   })
 
-  it('do notation', async () => {
-    const t = await pipe(
+  it('do notation', () => {
+    const t = pipe(
       _.right(1),
       _.bindTo('a'),
       _.bind('b', () => _.right('b')),
-      bufferTime(10),
-      Wonka.toPromise
+      Wonka.toArray
     )
 
     assert.deepStrictEqual(t, [E.right({ a: 1, b: 'b' })])
   })
 
-  it('fromOption', async () => {
+  it('fromOption', () => {
     assert.deepStrictEqual(
-      await pipe(
-        _.fromOption(() => 'a')(O.some(1)),
-        bufferTime(10),
-        Wonka.toPromise
-      ),
+      pipe(_.fromOption(() => 'a')(O.some(1)), Wonka.toArray),
       [E.right(1)]
     )
     assert.deepStrictEqual(
-      await pipe(
-        _.fromOption(() => 'a')(O.none),
-        bufferTime(10),
-        Wonka.toPromise
-      ),
+      pipe(_.fromOption(() => 'a')(O.none), Wonka.toArray),
       [E.left('a')]
     )
   })
 
-  it('fromEither', async () => {
-    assert.deepStrictEqual(
-      await pipe(_.fromEither(E.right(1)), bufferTime(10), Wonka.toPromise),
-      [E.right(1)]
-    )
-    assert.deepStrictEqual(
-      await pipe(_.fromEither(E.left('a')), bufferTime(10), Wonka.toPromise),
-      [E.left('a')]
-    )
+  it('fromEither', () => {
+    assert.deepStrictEqual(pipe(_.fromEither(E.right(1)), Wonka.toArray), [
+      E.right(1),
+    ])
+    assert.deepStrictEqual(pipe(_.fromEither(E.left('a')), Wonka.toArray), [
+      E.left('a'),
+    ])
   })
 
-  it('filterOrElse', async () => {
+  it('filterOrElse', () => {
     assert.deepStrictEqual(
-      await pipe(
+      pipe(
         _.filterOrElse(
           (n: number) => n > 0,
           () => 'a'
         )(_.of(1)),
-        bufferTime(10),
-        Wonka.toPromise
+        Wonka.toArray
       ),
       [E.right(1)]
     )
     assert.deepStrictEqual(
-      await pipe(
+      pipe(
         _.filterOrElse(
           (n: number) => n > 0,
           () => 'a'
         )(_.of(-1)),
-        bufferTime(10),
-        Wonka.toPromise
+        Wonka.toArray
       ),
       [E.left('a')]
     )
   })
 
-  it('filterOrElse', async () => {
+  it('filterOrElse', () => {
     assert.deepStrictEqual(
-      await pipe(
+      pipe(
         _.fromPredicate(
           (n: number) => n > 0,
           () => 'a'
         )(1),
-        bufferTime(10),
-        Wonka.toPromise
+        Wonka.toArray
       ),
       [E.right(1)]
     )
     assert.deepStrictEqual(
-      await pipe(
+      pipe(
         _.fromPredicate(
           (n: number) => n > 0,
           () => 'a'
         )(-1),
-        bufferTime(10),
-        Wonka.toPromise
+        Wonka.toArray
       ),
       [E.left('a')]
     )
