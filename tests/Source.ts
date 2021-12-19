@@ -5,6 +5,7 @@ import * as E from 'fp-ts/Either'
 import * as T from 'fp-ts/Task'
 import { pipe, identity } from 'fp-ts/function'
 import * as _ from '../src/Source'
+import { bufferTime } from '../src/sources'
 
 describe('Source', () => {
   it('of', () => {
@@ -28,7 +29,7 @@ describe('Source', () => {
     const double = (n: number): number => n * 2
     const triple = (n: number): number => n * 3
     const fab = Wonka.fromArray([double, triple])
-    const events = await pipe(fab, _.ap(fa), Wonka.buffer(Wonka.interval(100)), Wonka.delay(100), Wonka.toPromise)
+    const events = await pipe(fab, _.ap(fa), bufferTime(10), Wonka.toPromise)
 
     assert.deepStrictEqual(events, [3, 6, 9])
   })
@@ -51,7 +52,7 @@ describe('Source', () => {
     const fa = Wonka.fromArray([1, 2, 3])
     const fb = pipe(
       fa,
-      _.chain(a => Wonka.fromArray([a, a + 1]))
+      _.chain((a) => Wonka.fromArray([a, a + 1]))
     )
     const events = Wonka.toArray(fb)
 
@@ -62,7 +63,7 @@ describe('Source', () => {
     const fa = Wonka.fromArray([1, 2, 3])
     const fb = pipe(
       fa,
-      _.chainFirst(a => Wonka.fromArray([a, a + 1]))
+      _.chainFirst((a) => Wonka.fromArray([a, a + 1]))
     )
     const events = Wonka.toArray(fb)
 
@@ -71,14 +72,14 @@ describe('Source', () => {
 
   it('filterMap', () => {
     const fa = Wonka.fromArray([1, 2, 3])
-    const fb = pipe(fa, _.filterMap(O.fromPredicate(n => n > 1)))
+    const fb = pipe(fa, _.filterMap(O.fromPredicate((n) => n > 1)))
     const events = Wonka.toArray(fb)
 
     assert.deepStrictEqual(events, [2, 3])
   })
 
   it('compact', () => {
-    const fa = Wonka.fromArray([1, 2, 3].map(O.fromPredicate(n => n > 1)))
+    const fa = Wonka.fromArray([1, 2, 3].map(O.fromPredicate((n) => n > 1)))
     const fb = _.compact(fa)
     const events = Wonka.toArray(fb)
 
@@ -89,7 +90,7 @@ describe('Source', () => {
     const fa = Wonka.fromArray([1, 2, 3])
     const events = pipe(
       fa,
-      _.filter(n => n > 1),
+      _.filter((n) => n > 1),
       Wonka.toArray
     )
 
@@ -98,7 +99,7 @@ describe('Source', () => {
 
   it('partitionMap', () => {
     const fa = Wonka.fromArray([1, 2, 3])
-    const s = pipe(fa, _.partitionMap(E.fromPredicate(n => n > 1, identity)))
+    const s = pipe(fa, _.partitionMap(E.fromPredicate((n) => n > 1, identity)))
     const left = Wonka.toArray(s.left)
     const right = Wonka.toArray(s.right)
 
@@ -107,7 +108,9 @@ describe('Source', () => {
   })
 
   it('separate', () => {
-    const fa = Wonka.fromArray([1, 2, 3].map(E.fromPredicate(n => n > 1, identity)))
+    const fa = Wonka.fromArray(
+      [1, 2, 3].map(E.fromPredicate((n) => n > 1, identity))
+    )
     const s = _.separate(fa)
     const left = Wonka.toArray(s.left)
     const right = Wonka.toArray(s.right)
@@ -120,7 +123,7 @@ describe('Source', () => {
     const fa = Wonka.fromArray([1, 2, 3])
     const s = pipe(
       fa,
-      _.partition(n => n > 1)
+      _.partition((n) => n > 1)
     )
     const left = Wonka.toArray(s.left)
     const right = Wonka.toArray(s.right)
