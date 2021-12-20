@@ -34,7 +34,7 @@ export const copyPackageJson: Build<void> = (C) =>
 export const FILES: ReadonlyArray<string> = [
   'CHANGELOG.md',
   //  'LICENSE',
-  'README.md'
+  'README.md',
 ]
 
 export const copyFiles: Build<ReadonlyArray<void>> = (C) =>
@@ -82,7 +82,7 @@ function makePkgJson(module: string): TE.TaskEither<Error, string> {
         main: `../lib/${module}.js`,
         module: `../es6/${module}.js`,
         typings: `../lib/${module}.d.ts`,
-        sideEffects: false
+        sideEffects: false,
       },
       null,
       2

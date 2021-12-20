@@ -48,5 +48,5 @@ export const fileSystem: FileSystem = {
     mkdirTE,
     TE.map(() => undefined)
   ),
-  moveFile
+  moveFile,
 }

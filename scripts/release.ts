@@ -19,7 +19,7 @@ const exec =
     })
 
 export const main = exec('npm publish', {
-  cwd: DIST
+  cwd: DIST,
 })
 
 run(main)
